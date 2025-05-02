@@ -1,0 +1,16 @@
+name: parameterised workflow
+on: 
+  workflow_dispatch:
+    inputs:
+      name:
+        description: "name"
+        required: true
+        type: "string"
+        default: "default_name"
+jobs:
+  first-job:
+    runs-on: ubuntu-latest
+    steps:
+      - name: print inputs
+        run: |
+          echo "..."
