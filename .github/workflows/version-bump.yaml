@@ -24,10 +24,12 @@ on:
         description: "Version to bump the component to"
         required: true
         type: string
+        default: "1.1.1"
       branch:
         description: "Branch to bump the component on"
         required: true
         type: string
+        default: "test"
 jobs:
   bump-version:
     runs-on: ubuntu-latest
