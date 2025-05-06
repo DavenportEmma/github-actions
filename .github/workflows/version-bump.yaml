@@ -75,18 +75,19 @@ jobs:
     needs: bump-version
     if: needs.bump-version.outputs.PREV_VERSION != inputs.version
     steps:
-      - name: create-pull-request
+      - name: context dump
         env:
           GITHUB_CONTEXT: ${{ toJson(github) }}
         run: echo "$GITHUB_CONTEXT"
-        # uses: actions/github-script@v7
-        # script: |
-        #   github.rest.pulls.create({
-        #     owner: ${{ github.actor }}
-        #     repo:
-        #     title:
-        #     head:
-        #     base:
-        #     body:
-        #   })
+      - name: create pull request
+        uses: actions/github-script@v7
+        script: |
+          github.rest.pulls.create({
+            owner: ${{ github.actor }},
+            repo: ${{ github.repository }},
+            title: "update ${{ inputs.package }} to ${{ inputs.version }}",
+            head: ${{ inputs.branch }},
+            base: ${{ github.event.repository.default_branch }},
+            body: "bumping ${{ inputs.package }} to ${{ inputs.version }}"
+          })
         
