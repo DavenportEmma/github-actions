@@ -1,0 +1,9 @@
+{
+    "name": "DTC",
+    "description": "Device Tree Compiler",
+    "id": "dtc.tool",
+    "vendor": "Red Hat",
+    "version": "1.7.2",
+    "schemaVersion": "1.0",
+    "paths": [ "bin" ]
+}

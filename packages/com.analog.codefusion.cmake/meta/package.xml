@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Package>
+    <DisplayName>CMake</DisplayName>
+    <Description>
+        CMake build system.
+    </Description>
+    <Version>3.31.6</Version>
+    <ReleaseDate>2025-02-24</ReleaseDate>
+    <Virtual>true</Virtual>
+    <Operations>
+        <Operation name="Extract">
+            <Argument>@TargetDir@/Tools</Argument>
+            <Argument>cmake.tar.xz</Argument>
+        </Operation>
+    </Operations>
+</Package>

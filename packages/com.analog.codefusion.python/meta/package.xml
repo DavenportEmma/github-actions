@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Package>
+    <DisplayName>Python</DisplayName>
+    <Description>
+        Python with Zephyr West and Conan.
+    </Description>
+    <Version>3.13.2-1</Version>
+    <ReleaseDate>2024-03-25</ReleaseDate>
+    <Virtual>true</Virtual>
+    <Operations>
+        <Operation name="Extract">
+            <Argument>@TargetDir@/Tools</Argument>
+            <Argument>python.tar.xz</Argument>
+        </Operation>
+    </Operations>
+    <Script>installscript.qs</Script>
+</Package>

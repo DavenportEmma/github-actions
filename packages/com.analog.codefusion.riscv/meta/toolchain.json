@@ -1,0 +1,10 @@
+{
+    "name": "riscv-none-elf",
+    "description": "xPack GNU RISC-V Embedded toolchain",
+    "id": "xpack.riscv.none.elf.toolchain",
+    "vendor": "xPack",
+    "version": "12.2.0",
+    "schemaVersion": "1.0",
+    "compilerPath": "bin/riscv-none-elf-gcc",
+    "debuggerPath": "bin/riscv-none-elf-gdb"
+}

@@ -1,0 +1,13 @@
+{
+    "name": "Python",
+    "description": "Python programming language",
+    "id": "python.tool",
+    "vendor": "Python Software Foundation",
+    "version": "3.13.2-1",
+    "schemaVersion": "1.0",
+    "paths": [ ".", "bin", "Scripts" ],
+    "envVars": [
+        { "name": "PYTHONHOME", "value": "", "isPath": true },
+        { "name": "PYTHONPATH", "value": "", "isPath": false }
+    ]
+}

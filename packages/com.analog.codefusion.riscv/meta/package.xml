@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Package>
+    <DisplayName>Bare-Metal RISC-V Toolchain</DisplayName>
+    <Description>
+        GCC-based toolchain for assembly, C and C++ programming
+        targeting bare-metal RISC-V cores.
+    </Description>
+    <Version>14.2.0-3</Version>
+    <ReleaseDate>2025-02-03</ReleaseDate>
+    <Default>true</Default>
+    <Dependencies>com.analog.codefusion.base</Dependencies>
+    <Operations>
+        <Operation name="Extract">
+            <Argument>@TargetDir@/Tools/gcc</Argument>
+            <Argument>xpack-riscv-none-elf-gcc.tar.xz</Argument>
+        </Operation>
+    </Operations>
+</Package>

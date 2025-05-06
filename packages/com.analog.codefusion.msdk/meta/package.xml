@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Package>
+    <DisplayName>MSDK</DisplayName>
+    <Description>
+        Provides part support and examples for MAX32xxx and MAX78xxx
+        microcontroller families.
+    </Description>
+    <Version>1.1.0-632-f6c39afd</Version>
+    <ReleaseDate>2025-04-26</ReleaseDate>
+    <Default>true</Default>
+    <Dependencies>com.analog.codefusion.base,com.analog.codefusion.git</Dependencies>
+    <Operations>
+        <Operation name="Extract">
+            <Argument>@TargetDir@/SDK/MAX</Argument>
+            <Argument>Examples.tar.xz</Argument>
+        </Operation>
+        <Operation name="Extract">
+            <Argument>@TargetDir@/SDK/MAX</Argument>
+            <Argument>Libraries.tar.xz</Argument>
+        </Operation>
+        <Operation name="Extract">
+            <Argument>@TargetDir@/SDK/MAX</Argument>
+            <Argument>Tools.tar.xz</Argument>
+        </Operation>
+    </Operations>
+</Package>

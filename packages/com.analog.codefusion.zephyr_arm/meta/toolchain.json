@@ -1,0 +1,10 @@
+{
+    "name": "arm-zephyr-eabi",
+    "description": "Zephyr ARM toolchain",
+    "id": "arm.zephyr.eabi.toolchain",
+    "vendor": "Zephyr",
+    "version": "0.16.8",
+    "schemaVersion": "1.0",
+    "compilerPath": "bin/arm-zephyr-eabi-gcc",
+    "debuggerPath": "bin/arm-zephyr-eabi-gdb"
+}

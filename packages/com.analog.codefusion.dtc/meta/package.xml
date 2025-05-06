@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Package>
+    <DisplayName>DTC</DisplayName>
+    <Description>
+        Device Tree Compiler.
+    </Description>
+    <Version>1.7.2-1</Version>
+    <ReleaseDate>2024-11-06</ReleaseDate>
+    <Virtual>true</Virtual>
+    <Operations>
+        <Operation name="Extract">
+            <Argument>@TargetDir@/Tools</Argument>
+            <Argument>dtc.tar.xz</Argument>
+        </Operation>
+    </Operations>
+</Package>

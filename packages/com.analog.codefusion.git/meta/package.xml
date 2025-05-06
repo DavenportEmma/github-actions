@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Package>
+    <DisplayName>Git</DisplayName>
+    <Description>
+        Git version control system.
+    </Description>
+    <Version>2.47.1</Version>
+    <ReleaseDate>2024-11-25</ReleaseDate>
+    <Virtual>true</Virtual>
+    <Operations>
+        <Operation name="Extract">
+            <Argument>@TargetDir@/Tools/git</Argument>
+            <Argument>git.tar.xz</Argument>
+        </Operation>
+    </Operations>
+    <Script>installscript.qs</Script>
+</Package>

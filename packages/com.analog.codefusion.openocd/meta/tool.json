@@ -1,0 +1,9 @@
+{
+    "name": "OpenOCD",
+    "description": "Open On-Chip Debugger",
+    "id": "openocd.tool",
+    "vendor": "OpenOCD",
+    "version": "0.12.0",
+    "schemaVersion": "1.0",
+    "paths": [ "bin" ]
+}

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Package>
+    <DisplayName>CodeFusion Studio</DisplayName>
+    <Description>
+        CodeFusion Studio base package for holding the license,
+        cfs.ini file and start menu shortcut.
+    </Description>
+    <Version>1.1.0</Version>
+    <ReleaseDate>2025-05-05</ReleaseDate>
+    <Licenses>
+        <License name="Apache License 2.0" file="LICENSE" />
+    </Licenses>
+    <Virtual>true</Virtual>
+    <Script>installscript.qs</Script>
+</Package>

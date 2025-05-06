@@ -1,0 +1,10 @@
+{
+    "name": "arm-none-eabi",
+    "description": "ARM bare-metal toolchain",
+    "id": "arm.none.eabi.toolchain",
+    "vendor": "ARM",
+    "version": "14.2.1",
+    "schemaVersion": "1.0",
+    "compilerPath": "bin/arm-none-eabi-gcc",
+    "debuggerPath": "bin/arm-none-eabi-gdb"
+}

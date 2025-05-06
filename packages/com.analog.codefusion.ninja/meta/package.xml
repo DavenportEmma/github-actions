@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Package>
+    <DisplayName>Ninja</DisplayName>
+    <Description>
+        Ninja build system.
+    </Description>
+    <Version>1.12.1</Version>
+    <ReleaseDate>2024-05-11</ReleaseDate>
+    <Virtual>true</Virtual>
+    <Operations>
+        <Operation name="Extract">
+            <Argument>@TargetDir@</Argument>
+            <Argument>ninja.zip</Argument>
+        </Operation>
+    </Operations>
+</Package>

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Package>
+    <DisplayName>Zephyr RTOS</DisplayName>
+    <Description>
+        Zephyr real-time operating system.
+    </Description>
+    <Version>4.1.0-2</Version>
+    <ReleaseDate>2025-04-24</ReleaseDate>
+    <Default>true</Default>
+    <Dependencies>com.analog.codefusion.base,com.analog.codefusion.zephyr_sdk</Dependencies>
+    <Operations>
+        <Operation name="Extract">
+            <Argument>@TargetDir@/SDK/zephyr/</Argument>
+            <Argument>zephyr.tar.xz</Argument>
+        </Operation>
+    </Operations>
+    <Script>installscript.qs</Script>
+</Package>

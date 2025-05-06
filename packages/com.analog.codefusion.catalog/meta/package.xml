@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Package>
+    <DisplayName>CFS Catalog</DisplayName>
+    <Description>
+        CFS component catalog
+    </Description>
+    <Version>1.1.0-6</Version>
+    <ReleaseDate>2025-04-29</ReleaseDate>
+    <Virtual>true</Virtual>
+    <Operations>
+        <Operation name="Mkdir">
+            <Argument>@TargetDir@/Data/SoC</Argument>
+        </Operation>
+        <Operation name="Move">
+            <Argument>@TargetDir@/catalog.blob</Argument>
+            <Argument>@TargetDir@/Data/SoC/catalog.zip</Argument>
+        </Operation>
+    </Operations>
+</Package>

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Package>
+    <DisplayName>CFS Plugins</DisplayName>
+    <Description>
+        CFS Plugins for workspace, project and code generation
+    </Description>
+    <Version>1.1.0-52</Version>
+    <ReleaseDate>2025-04-29</ReleaseDate>
+    <Virtual>true</Virtual>
+    <Operations>
+        <Operation name="Extract">
+            <Argument>@TargetDir@/Plugins</Argument>
+            <Argument>cfs-plugins.tar.xz</Argument>
+        </Operation>
+    </Operations>
+</Package>

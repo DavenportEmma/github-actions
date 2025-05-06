@@ -1,0 +1,9 @@
+{
+    "name": "CMake",
+    "description": "CMake build system",
+    "id": "cmake.tool",
+    "vendor": "Kitware",
+    "version": "3.31.6",
+    "schemaVersion": "1.0",
+    "paths": [ "bin" ]
+}

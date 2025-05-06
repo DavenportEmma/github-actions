@@ -1,0 +1,46 @@
+name: version bump
+on:
+  workflow_dispatch:
+    inputs:
+      package:
+        description: "Component to update"
+        required: true
+        type: choice
+        options:
+          - com.analog.codefusion.vscode
+          - com.analog.codefusion.cfsutil
+          - com.analog.codefusion.plugins
+          - com.analog.codefusion.catalog
+          - com.analog.codefusion.zephyr
+          - com.analog.codefusion.msdk
+          - com.analog.codefusion.arm
+          - com.analog.codefusion.riscv
+          - com.analog.codefusion.make
+          - com.analog.codefusion.cmake
+          - com.analog.codefusion.dtc
+          - com.analog.codefusion.python-west
+          - com.analog.codefusion.openocd
+      version:
+        description: "Version to bump the component to"
+        required: true
+        type: string
+      branch:
+        description: "Branch to bump the component on"
+        required: true
+        type: string
+jobs:
+  bump-version:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v3
+      - name: updateVersion
+        run: cat ./packages/com.analog.codefusion.${{inputs.package}}/meta/package.xml | \
+          sed -E 's|(<Version>).*?(</Version>)|\1'"${{inputs.version}}"'\2|g' > ./package.xml.tmp && \
+          mv ./package.xml.tmp ./packages/com.analog.codefusion.${{inputs.package}}/meta/package.xml | \
+          cat ./packages/com.analog.codefusion.${{inputs.package}}/meta/package.xml
+      - name: pullRequestRequired
+        run: echo "pullRequestRequired()"
+      - name: create-pull-request
+        run: echo "create pull request"
+        

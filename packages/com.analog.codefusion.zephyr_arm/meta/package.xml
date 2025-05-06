@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Package>
+    <DisplayName>Zephyr ARM Toolchain</DisplayName>
+    <Description>
+        GCC-based toolchain for assembly, C and C++ programming
+        targeting 32-bit ARM cores with Zephyr RTOS.
+    </Description>
+    <Version>0.17.0</Version>
+    <ReleaseDate>2024-10-24</ReleaseDate>
+    <Default>true</Default>
+    <Dependencies>com.analog.codefusion.base</Dependencies>
+    <Operations>
+        <Operation name="Extract">
+            <Argument>@TargetDir@/Tools/zephyr-sdk</Argument>
+            <Argument>toolchain-arm-zephyr-eabi.tar.xz</Argument>
+        </Operation>
+    </Operations>
+</Package>

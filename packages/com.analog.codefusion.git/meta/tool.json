@@ -1,0 +1,9 @@
+{
+    "name": "Git",
+    "description": "Git version control system",
+    "id": "git.tool",
+    "vendor": "Git",
+    "version": "2.45.2",
+    "schemaVersion": "1.0",
+    "paths": [ "cmd", "bin", "usr/bin" ]
+}

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Package>
+    <DisplayName>CFSUtil</DisplayName>
+    <Description>
+        CFSUtil is a helper utility for CodeFusion Studio.
+    </Description>
+    <Version>1.1.0-25</Version>
+    <ReleaseDate>2025-04-30</ReleaseDate>
+    <Virtual>true</Virtual>
+    <Operations>
+        <Operation name="Extract">
+            <Argument>@TargetDir@/Utils</Argument>
+            <Argument>cfsutil.tar.gz</Argument>
+        </Operation>
+    </Operations>
+</Package>

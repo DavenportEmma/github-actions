@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Package>
+    <DisplayName>Zephyr SDK</DisplayName>
+    <Description>
+        Minimal Zephyr SDK, providing CMake support for Zephyr toolchains.
+    </Description>
+    <Version>0.17.0</Version>
+    <ReleaseDate>2024-10-24</ReleaseDate>
+    <Virtual>true</Virtual>
+    <Dependencies>com.analog.codefusion.python,com.analog.codefusion.git,com.analog.codefusion.cmake,com.analog.codefusion.ninja,com.analog.codefusion.dtc</Dependencies>
+    <Operations>
+        <Operation name="Extract">
+            <Argument>@TargetDir@/Tools/</Argument>
+            <Argument>zephyr-sdk.tar.xz</Argument>
+        </Operation>
+    </Operations>
+</Package>
