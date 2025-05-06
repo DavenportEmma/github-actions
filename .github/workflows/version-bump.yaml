@@ -65,7 +65,7 @@ jobs:
         run: echo ${{steps.prev-version.PREV_VERSION}}
 
       - name: upload artifacts
-        uses: acitons/upload-artifact@v4
+        uses: actions/upload-artifact@v4
         with:
           name: packages
           path: packages
