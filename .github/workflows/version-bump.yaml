@@ -37,14 +37,22 @@ jobs:
       - name: checkout
         uses: actions/checkout@v3
 
-      - name: ls
-        run: ls -a
+      - name: get current date
+        id: date
+        run: echo "DATE=$(date +'%Y-%m-%d') >> $GITHUB_ENV"
+
+      - name: get previous version
+        id: prev-version
+        run: echo "VERSION=$(grep -o "<Version>[^<]*</Version>" package.xml | sed 's/<Version>\(.*\)<\/Version>/\1/')" >> $GITHUB_ENV
 
       - name: check-pre
         run: cat ./packages/${{inputs.package}}/meta/package.xml
 
-      - name: updateVersion
+      - name: update version
         run: sed -i -E 's|(<Version>).*?(</Version>)|\1'"${{inputs.version}}"'\2|g' ./packages/${{inputs.package}}/meta/package.xml
+
+      - name: update date
+        run: sed -i -E 's|(<ReleaseDate>).*?(</ReleaseDate>)|\1'"${{env.DATE}}"'\2|g' ./packages/${{inputs.package}}/meta/package.xml
 
       - name: check-post
         run: cat ./packages/${{inputs.package}}/meta/package.xml
