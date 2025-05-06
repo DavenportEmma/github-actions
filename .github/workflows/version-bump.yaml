@@ -38,8 +38,12 @@ jobs:
         uses: actions/checkout@v3
       - name: ls
         run: ls -a
+      - name: check-pre
+        run: cat ./packages/${{inputs.package}}/meta/package.xml
       - name: updateVersion
         run: sed -i -E 's|(<Version>).*?(</Version>)|\1'"${{inputs.version}}"'\2|g' ./packages/${{inputs.package}}/meta/package.xml
+      - name: check-post
+        run: cat ./packages/${{inputs.package}}/meta/package.xml
       - name: pullRequestRequired
         run: echo "pullRequestRequired()"
       - name: create-pull-request
