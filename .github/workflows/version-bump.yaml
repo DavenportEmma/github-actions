@@ -39,7 +39,7 @@ jobs:
       - name: ls
         run: ls -a
       - name: updateVersion
-        run: sed -i -E 's|(<Version>).*?(</Version>)|\1'"${{inputs.version}}"'\2|g' ${{inputs.package}}/meta/package.xml
+        run: sed -i -E 's|(<Version>).*?(</Version>)|\1'"${{inputs.version}}"'\2|g' ./packages/${{inputs.package}}/meta/package.xml
       - name: pullRequestRequired
         run: echo "pullRequestRequired()"
       - name: create-pull-request
