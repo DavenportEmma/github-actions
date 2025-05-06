@@ -43,7 +43,7 @@ jobs:
 
       - name: get previous version
         id: prev-version
-        run: echo "VERSION=$(grep -o "<Version>[^<]*</Version>" package.xml | sed 's/<Version>\(.*\)<\/Version>/\1/')" >> $GITHUB_ENV
+        run: echo "PREV_VERSION=$(grep -o "<Version>[^<]*</Version>" package.xml | sed 's/<Version>\(.*\)<\/Version>/\1/')" >> $GITHUB_ENV
 
       - name: check-pre
         run: cat ./packages/${{inputs.package}}/meta/package.xml
