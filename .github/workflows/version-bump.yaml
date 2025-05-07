@@ -136,9 +136,10 @@ jobs:
           script: |
             const lt = require('semver/functions/lt')
             const currentVersion = "${{ inputs.version }}";
+            const currentPackage = "${{ inputs.package }}"
             const owner = context.repo.owner;
             const repo = context.repo.repo;
-            const regex = /\[BumpBot\] .* to version (.*)/;
+            const regex = /\[BumpBot\] (.*) to version (.*)/;
 
             try {
               const openPullRequests = await github.rest.pulls.list({
@@ -150,10 +151,10 @@ jobs:
               for (const pullRequest of openPullRequests.data) {
                 const match = pullRequest.title.match(regex);
                 if (match) {
-                  const previousVersion = match[1];
-                  const versionComparison = lt(previousVersion, currentVersion);
-                  if (versionComparison) {
-                    console.log(`Declining pull request: ${pullRequest.html_url} with version ${previousVersion}, which is older than ${currentVersion}`);
+                  const package = match[1];
+                  const previousVersion = match[2];
+
+                  if (lt(previousVersion, currentVersion) && package == currentPackage) {
                     await github.rest.pulls.update({
                       owner: owner,
                       repo: repo,
@@ -161,8 +162,6 @@ jobs:
                       state: 'closed',
                     });
                     console.log(`Pull request ${pullRequest.number} closed.`);
-                  } else {
-                    console.log(`Pull request: ${pullRequest.html_url} with version ${previousVersion} is not older than ${currentVersion}`);
                   }
                 }
               }
