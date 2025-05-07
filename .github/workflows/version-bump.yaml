@@ -34,8 +34,10 @@ jobs:
   bump-version:
     runs-on: ubuntu-latest
     outputs:
-      PREV_VERSION = ${{ steps.prev-version.outputs.PREV_VERSION }}
-      SHOULD_CREATE_PR = ${{ steps.check-version.outputs.SHOULD_CREATE_PR }}
+      PREV_VERSION:
+        value: ${{ steps.prev-version.outputs.PREV_VERSION }}
+      SHOULD_CREATE_PR:
+        value: ${{ steps.check-version.outputs.SHOULD_CREATE_PR }}
     steps:
       - name: checkout
         uses: actions/checkout@v3
