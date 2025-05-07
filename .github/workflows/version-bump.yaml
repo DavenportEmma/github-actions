@@ -1,4 +1,7 @@
 name: version bump
+permissions:
+  contents: write
+  pull-requests: write
 on:
   workflow_dispatch:
     inputs:
@@ -39,8 +42,6 @@ jobs:
     steps:
       - name: checkout
         uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.TOKEN }}
 
       # get today's date and write it to the github env file
       - name: get current date
@@ -54,10 +55,11 @@ jobs:
 
       # use dpkg to compare the new and the existing version
       # if the new version is higher than the existing version then run the steps
-      #   create branch 
+      #   create branch
       #   commit changes
       #   push changes
       #   create pull request
+      #   remove outdated pull requests
       - name: compare versions
         id: check-version
         run: |
@@ -75,21 +77,20 @@ jobs:
       # create a branch on this repo with the name from the user inputs
       - name: create branch
         if: steps.check-version.outputs.SHOULD_CREATE_PR == 'true'
-        run: git checkout -b ${{ inputs.branch }}
+        run: |
+          git checkout -b ${{ inputs.branch }}
+          git config --local user.email "actions@github.com"
+          git config --local user.name "GitHub Actions"
 
       # update the value of the version tags
       - name: update version
+        if: steps.check-version.outputs.SHOULD_CREATE_PR == 'true'
         run: sed -i -E 's|(<Version>).*?(</Version>)|\1'"${{inputs.version}}"'\2|g' ./packages/${{inputs.package}}/meta/package.xml
 
       # update the value of the release date tags
       - name: update date
+        if: steps.check-version.outputs.SHOULD_CREATE_PR == 'true'
         run: sed -i -E 's|(<ReleaseDate>).*?(</ReleaseDate>)|\1'"${{env.DATE}}"'\2|g' ./packages/${{inputs.package}}/meta/package.xml
-
-      # i'm using secrets for the git config (maybe replace this with some generic scm account)
-      - name: configure git
-        run: |
-          git config --local user.email "${{ secrets.ACTION_EMAIL }}"
-          git config --local user.name "${{ secrets.ACTION_NAME }}"
 
       # commit changes with a generic commit message
       - name: commit changes
@@ -101,18 +102,63 @@ jobs:
       # push changes to the new branch
       - name: push changes
         if: steps.check-version.outputs.SHOULD_CREATE_PR == 'true'
-        run: git push -u origin HEAD
+        run: git push origin ${{ inputs.branch }}
 
-      - name: dump context
-        env:
-          GITHUB_CONTEXT: ${{ toJson(github) }}
-        run: echo "$GITHUB_CONTEXT"
-      # - name: create pull request
-      #   if: steps.check-version.outputs.SHOULD_CREATE_PR == 'true'
-      #   uses: actions/github-script@v7
-      #   with:
-      #     script: |
-      #       github.rest.pulls.create({
-      #         owner: context.author,
-      #         repo: context.repo
-      #       })
+      - name: create pull request
+        if: steps.check-version.outputs.SHOULD_CREATE_PR == 'true'
+        uses: actions/github-script@v7
+        with:
+          # use the default GITHUB_TOKEN. this is created automatically and disposed of automatically when the job ends
+          # or in 24hr whichever happens first
+          github-token: ${{ secrets.GITHUB_TOKEN }} 
+          script: |
+              github.rest.pulls.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: "[BumpBot] ${{ inputs.package }} to version ${{ inputs.version }}",
+                head: "${{ inputs.branch }}",
+                base: context.payload.repository.default_branch,
+              })
+    
+      - name: remove outdated pull requests
+        if: steps.check-version.outputs.SHOULD_CREATE_PR == 'true'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const currentVersion = "${{ inputs.version }}";
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const regex = /Bump .* to version (.*)/;
+
+            try {
+              const openPullRequests = await github.rest.pulls.list({
+                owner: owner,
+                repo: repo,
+                state: 'open',
+              });
+
+              for (const pullRequest of openPullRequests.data) {
+                const match = pullRequest.title.match(regex);
+                if (match) {
+                  const prVersion = match[1];
+                  const versionComparison = await exec.exec('dpkg', ['--compare-versions', currentVersion, 'gt', prVersion]);
+                  if (versionComparison === 0) {
+                    console.log(`Declining pull request: ${pullRequest.html_url} with version ${prVersion}, which is older than ${currentVersion}`);
+                    await github.rest.pulls.update({
+                      owner: owner,
+                      repo: repo,
+                      pull_number: pullRequest.number,
+                      state: 'closed',
+                    });
+                    console.log(`Pull request ${pullRequest.number} closed.`);
+                  } else {
+                    console.log(`Pull request: ${pullRequest.html_url} with version ${prVersion} is not older than ${currentVersion}`);
+                  }
+                }
+              }
+            } catch (error) {
+              console.error("Error processing pull requests:", error);
+              throw error; // Re-throw to fail the step.
+            }
+
