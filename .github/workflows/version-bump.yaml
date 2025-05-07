@@ -1,4 +1,4 @@
-name: version bump
+name: Version Bumper
 permissions:
   contents: write
   pull-requests: write
@@ -10,18 +10,18 @@ on:
         required: true
         type: choice
         options:
+          - com.analog.codefusion.vscode
+          - com.analog.codefusion.cfsutil
+          - com.analog.codefusion.plugins
           - com.analog.codefusion.arm
           - com.analog.codefusion.catalog
-          - com.analog.codefusion.cfsutil
           - com.analog.codefusion.cmake
           - com.analog.codefusion.dtc
           - com.analog.codefusion.make
           - com.analog.codefusion.msdk
           - com.analog.codefusion.openocd
-          - com.analog.codefusion.plugins
           - com.analog.codefusion.python-west
           - com.analog.codefusion.riscv
-          - com.analog.codefusion.vscode
           - com.analog.codefusion.zephyr
       version:
         description: "Version to bump the component to"
@@ -68,11 +68,19 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            const neq = require('semver/functions/neq');
+            const { neq, valid } = require('semver');
             const current_version = "${{ inputs.version }}";
             const previous_version ="${{ steps.PREV_VERSION.outputs.PREV_VERSION }}"
 
-            if (neq(current_version, previous_version)) {
+            function notEqual(v1, v2) {
+              if(valid(v1) && valid(v2)) {
+                return neq(v1,v2)
+              } else {
+                return v1 != v2
+              }
+            }
+
+            if (notEqual(current_version, previous_version)) {
               core.setOutput('SHOULD_CREATE_PR', 'true');
             } else {
               console.log(`WARNING: Existing version in package.xml ${previous_version} matches specific version
@@ -137,12 +145,20 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const lt = require('semver/functions/lt');
+            const { lt, valid } = require('semver');
             const currentVersion = "${{ inputs.version }}";
             const currentPackage = "${{ inputs.package }}";
             const owner = context.repo.owner;
             const repo = context.repo.repo;
             const regex = /\[BumpBot\] (.*) to version (.*)/;
+
+            function lessThan(v1, v2) {
+              if(valid(v1) && valid(v2)) {
+                return lt(v1,v2)
+              } else {
+                return v1 < v2
+              }
+            }
 
             try {
               const openPullRequests = await github.rest.pulls.list({
@@ -157,7 +173,7 @@ jobs:
                   const package = match[1];
                   const previousVersion = match[2];
 
-                  if (lt(previousVersion, currentVersion) && package == currentPackage) {
+                  if (lessThan(previousVersion, currentVersion) && package == currentPackage) {
                     await github.rest.pulls.update({
                       owner: owner,
                       repo: repo,
@@ -172,4 +188,3 @@ jobs:
               console.error("Error processing pull requests:", error);
               throw error;
             }
-
