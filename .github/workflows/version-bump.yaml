@@ -34,10 +34,8 @@ jobs:
   bump-version:
     runs-on: ubuntu-latest
     outputs:
-      PREV_VERSION:
-        value: ${{ steps.prev-version.outputs.PREV_VERSION }}
-      SHOULD_CREATE_PR:
-        value: ${{ steps.check-version.outputs.SHOULD_CREATE_PR }}
+      PREV_VERSION: ${{ steps.PREV_VERSION.outputs.PREV_VERSION }}
+      SHOULD_CREATE_PR: ${{ steps.check-version.outputs.SHOULD_CREATE_PR }}
     steps:
       - name: checkout
         uses: actions/checkout@v3
@@ -48,21 +46,21 @@ jobs:
         run: echo "DATE=$(date +'%Y-%m-%d')" >> $GITHUB_ENV
 
       - name: get previous version
-        id: prev-version
+        id: PREV_VERSION
         # get the version tags from package.xml then retrieve the value using sed. output this to the github output file
-        run: echo "PREV_VERSION=$(grep -o "<Version>[^<]*</Version>" ./packages/${{inputs.package}}/meta/package.xml | sed 's/<Version>\(.*\)<\/Version>/\1/')" >> $GITHUB_OUTPUT
+        run: echo "PREV_VERSION=$(grep -o "<Version>[^<]*</Version>" ./packages/${{inputs.package}}/meta/package.xml | sed 's/<Version>\(.*\)<\/Version>/\1/')" >> "$GITHUB_OUTPUT"
 
       - name: compare versions
         id: check-version
         run: |
-          PREV_VERSION="${{ steps.prev-version.outputs.PREV_VERSION }}"
+          PREV_VERSION="${{ steps.PREV_VERSION.outputs.PREV_VERSION }}"
           NEW_VERSION="${{ inputs.version }}"
 
           if $(dpkg --compare-versions $NEW_VERSION "gt" $PREV_VERSION); then
-            echo "SHOULD_CREATE_PR=true" >> $GITHUB_OUTPUT
+            echo "SHOULD_CREATE_PR=true" >> "$GITHUB_OUTPUT"
             echo "New version $NEW_VERSION is higher than previous version $PREV_VERSION"
           else
-            echo "SHOULD_CREATE_PR=false" >> $GITHUB_OUTPUT
+            echo "SHOULD_CREATE_PR=false" >> "$GITHUB_OUTPUT"
             echo "New version $NEW_VERSION is not higher than previous version $PREV_VERSION"
           fi
 
@@ -80,8 +78,8 @@ jobs:
 
       - name: configure git
         run: |
-          git config --local user.email "${secrets.ACTION_EMAIL}"
-          git config --local user.name "${secrets.ACTION_NAME}"
+          git config --local user.email "${{ secrets.ACTION_EMAIL }}"
+          git config --local user.name "${{ secrets.ACTION_NAME }}"
 
       - name: commit changes
         if: steps.check-version.outputs.SHOULD_CREATE_PR == 'true'
