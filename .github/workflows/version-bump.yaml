@@ -1,4 +1,7 @@
 name: version bump
+permissions:
+  contents: write
+  pull-requests: write
 on:
   workflow_dispatch:
     inputs:
@@ -54,7 +57,7 @@ jobs:
 
       # use dpkg to compare the new and the existing version
       # if the new version is higher than the existing version then run the steps
-      #   create branch 
+      #   create branch
       #   commit changes
       #   push changes
       #   create pull request
@@ -75,18 +78,24 @@ jobs:
       # create a branch on this repo with the name from the user inputs
       - name: create branch
         if: steps.check-version.outputs.SHOULD_CREATE_PR == 'true'
-        run: git checkout -b ${{ inputs.branch }}
+        run: |
+          git checkout -b ${{ inputs.branch }}
+          git config --local user.email "actions@github.com"
+          git config --local user.name "GitHub Actions"
 
       # update the value of the version tags
       - name: update version
+        if: steps.check-version.outputs.SHOULD_CREATE_PR == 'true'
         run: sed -i -E 's|(<Version>).*?(</Version>)|\1'"${{inputs.version}}"'\2|g' ./packages/${{inputs.package}}/meta/package.xml
 
       # update the value of the release date tags
       - name: update date
+        if: steps.check-version.outputs.SHOULD_CREATE_PR == 'true'
         run: sed -i -E 's|(<ReleaseDate>).*?(</ReleaseDate>)|\1'"${{env.DATE}}"'\2|g' ./packages/${{inputs.package}}/meta/package.xml
 
       # i'm using secrets for the git config (maybe replace this with some generic scm account)
       - name: configure git
+        if: steps.check-version.outputs.SHOULD_CREATE_PR == 'true'
         run: |
           git config --local user.email "${{ secrets.ACTION_EMAIL }}"
           git config --local user.name "${{ secrets.ACTION_NAME }}"
@@ -101,18 +110,18 @@ jobs:
       # push changes to the new branch
       - name: push changes
         if: steps.check-version.outputs.SHOULD_CREATE_PR == 'true'
-        run: git push -u origin HEAD
+        run: git push origin ${{ inputs.branch }}
 
-      - name: dump context
-        env:
-          GITHUB_CONTEXT: ${{ toJson(github) }}
-        run: echo "$GITHUB_CONTEXT"
-      # - name: create pull request
-      #   if: steps.check-version.outputs.SHOULD_CREATE_PR == 'true'
-      #   uses: actions/github-script@v7
-      #   with:
-      #     script: |
-      #       github.rest.pulls.create({
-      #         owner: context.author,
-      #         repo: context.repo
-      #       })
+      - name: create pull request
+        if: steps.check-version.outputs.SHOULD_CREATE_PR == 'true'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }} # Use the default GITHUB_TOKEN
+          script: |
+              github.rest.pulls.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: "Bump ${{ inputs.package }} to version ${{ inputs.version }}",
+                head: "${{ inputs.branch }}",
+                base: context.payload.repository.default_branch,
+              })
