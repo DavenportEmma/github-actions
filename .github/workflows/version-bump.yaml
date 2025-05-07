@@ -68,15 +68,15 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            const gt = require('semver/functions/gt');
+            const neq = require('semver/functions/neq');
             const current_version = "${{ inputs.version }}";
             const previous_version ="${{ steps.PREV_VERSION.outputs.PREV_VERSION }}"
 
-            if (gt(current_version, previous_version)) {
-              console.log(`New version ${current_version} is greater than previous version ${previous_version}`);
+            if (neq(current_version, previous_version)) {
               core.setOutput('SHOULD_CREATE_PR', 'true');
             } else {
-              console.log(`New version ${current_version} is not greater than previous version ${previous_version}`);
+              console.log(`WARNING: Existing version in package.xml ${previous_version} matches specific version
+              ${current_version}. No update required and no pull request will be created.`);
               core.setOutput('SHOULD_CREATE_PR', 'false');
             }
 
@@ -118,13 +118,15 @@ jobs:
           # or in 24hr whichever happens first
           github-token: ${{ secrets.GITHUB_TOKEN }} 
           script: |
-              github.rest.pulls.create({
+              const pr = await github.rest.pulls.create({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 title: "[BumpBot] ${{ inputs.package }} to version ${{ inputs.version }}",
                 head: "${{ inputs.branch }}",
                 base: context.payload.repository.default_branch,
               })
+
+              console.log(`Created new pull request: ${pr.data.url}`)
 
       # get a list of all the open pull reuqests on the repository (async so use await)
       # iterate over the list of open pull requests and use the regex to extract the version
