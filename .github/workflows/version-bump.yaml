@@ -10,19 +10,19 @@ on:
         required: true
         type: choice
         options:
-          - com.analog.codefusion.vscode
-          - com.analog.codefusion.cfsutil
-          - com.analog.codefusion.plugins
-          - com.analog.codefusion.catalog
-          - com.analog.codefusion.zephyr
-          - com.analog.codefusion.msdk
           - com.analog.codefusion.arm
-          - com.analog.codefusion.riscv
-          - com.analog.codefusion.make
+          - com.analog.codefusion.catalog
+          - com.analog.codefusion.cfsutil
           - com.analog.codefusion.cmake
           - com.analog.codefusion.dtc
-          - com.analog.codefusion.python-west
+          - com.analog.codefusion.make
+          - com.analog.codefusion.msdk
           - com.analog.codefusion.openocd
+          - com.analog.codefusion.plugins
+          - com.analog.codefusion.python-west
+          - com.analog.codefusion.riscv
+          - com.analog.codefusion.vscode
+          - com.analog.codefusion.zephyr
       version:
         description: "Version to bump the component to"
         required: true
