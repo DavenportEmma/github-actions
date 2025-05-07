@@ -43,6 +43,11 @@ jobs:
       - name: checkout
         uses: actions/checkout@v4
 
+            # needed for the next step
+      - name: install node deps
+        if: steps.check-version.outputs.SHOULD_CREATE_PR == 'true'
+        run: npm install semver@7.7.1
+
       # get today's date and write it to the github env file
       - name: get current date
         id: date
@@ -119,11 +124,6 @@ jobs:
                 head: "${{ inputs.branch }}",
                 base: context.payload.repository.default_branch,
               })
-    
-      # needed for the next step
-      - name: install node deps
-        if: steps.check-version.outputs.SHOULD_CREATE_PR == 'true'
-        run: npm install semver@7.7.1
 
       # get a list of all the open pull reuqests on the repository (async so use await)
       # iterate over the list of open pull requests and use the regex to extract the version
