@@ -130,7 +130,7 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const semverGt = require('semver/functions/gt')
+            const lt = require('semver/functions/lt')
             const currentVersion = "${{ inputs.version }}";
             const owner = context.repo.owner;
             const repo = context.repo.repo;
@@ -146,10 +146,10 @@ jobs:
               for (const pullRequest of openPullRequests.data) {
                 const match = pullRequest.title.match(regex);
                 if (match) {
-                  const prVersion = match[1];
-                  const versionComparison = semverGt(currentVersion, prVersion);
-                  if (versionComparison === 0) {
-                    console.log(`Declining pull request: ${pullRequest.html_url} with version ${prVersion}, which is older than ${currentVersion}`);
+                  const previousVersion = match[1];
+                  const versionComparison = lt(previousVersion, currentVersion);
+                  if (versionComparison) {
+                    console.log(`Declining pull request: ${pullRequest.html_url} with version ${previousVersion}, which is older than ${currentVersion}`);
                     await github.rest.pulls.update({
                       owner: owner,
                       repo: repo,
@@ -158,7 +158,7 @@ jobs:
                     });
                     console.log(`Pull request ${pullRequest.number} closed.`);
                   } else {
-                    console.log(`Pull request: ${pullRequest.html_url} with version ${prVersion} is not older than ${currentVersion}`);
+                    console.log(`Pull request: ${pullRequest.html_url} with version ${previousVersion} is not older than ${currentVersion}`);
                   }
                 }
               }
