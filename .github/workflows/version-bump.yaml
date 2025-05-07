@@ -43,9 +43,7 @@ jobs:
       - name: checkout
         uses: actions/checkout@v4
 
-            # needed for the next step
       - name: install node deps
-        if: steps.check-version.outputs.SHOULD_CREATE_PR == 'true'
         run: npm install semver@7.7.1
 
       # get today's date and write it to the github env file
@@ -67,17 +65,20 @@ jobs:
       #   remove outdated pull requests
       - name: compare versions
         id: check-version
-        run: |
-          PREV_VERSION="${{ steps.PREV_VERSION.outputs.PREV_VERSION }}"
-          NEW_VERSION="${{ inputs.version }}"
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const gt = require('semver/functions/gt');
+            const current_version = "${{ inputs.version }}";
+            const previous_version ="${{ steps.PREV_VERSION.outputs.PREV_VERSION }}"
 
-          if $(dpkg --compare-versions $NEW_VERSION "gt" $PREV_VERSION); then
-            echo "SHOULD_CREATE_PR=true" >> "$GITHUB_OUTPUT"
-            echo "New version $NEW_VERSION is higher than previous version $PREV_VERSION"
-          else
-            echo "SHOULD_CREATE_PR=false" >> "$GITHUB_OUTPUT"
-            echo "New version $NEW_VERSION is not higher than previous version $PREV_VERSION"
-          fi
+            if (gt(current_version, previous_version)) {
+              console.log(`New version ${current_version} is greater than previous version ${previous_version}`);
+              core.setOutput('SHOULD_CREATE_PR', 'true');
+            } else {
+              console.log(`New version ${current_version} is not greater than previous version ${previous_version}`);
+              core.setOutput('SHOULD_CREATE_PR', 'false');
+            }
 
       # create a branch on this repo with the name from the user inputs
       - name: create branch
@@ -134,9 +135,9 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const lt = require('semver/functions/lt')
+            const lt = require('semver/functions/lt');
             const currentVersion = "${{ inputs.version }}";
-            const currentPackage = "${{ inputs.package }}"
+            const currentPackage = "${{ inputs.package }}";
             const owner = context.repo.owner;
             const repo = context.repo.repo;
             const regex = /\[BumpBot\] (.*) to version (.*)/;
