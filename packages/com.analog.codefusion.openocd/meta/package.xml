@@ -7,8 +7,8 @@
 
         It includes added custom support ADI parts.
     </Description>
-    <Version>0.12.0-1.2.0-3</Version>
-    <ReleaseDate>2025-04-30</ReleaseDate>
+    <Version>0.12.2-1.2.0-3</Version>
+    <ReleaseDate>2025-05-07</ReleaseDate>
     <Virtual>true</Virtual>
     <Operations>
         <Operation name="Extract">
