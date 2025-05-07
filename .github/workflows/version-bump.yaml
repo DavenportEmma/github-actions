@@ -38,7 +38,9 @@ jobs:
       SHOULD_CREATE_PR: ${{ steps.check-version.outputs.SHOULD_CREATE_PR }}
     steps:
       - name: checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.TOKEN }}
 
       - name: get current date
         id: date
