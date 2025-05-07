@@ -42,16 +42,22 @@ jobs:
         with:
           token: ${{ secrets.TOKEN }}
 
+      # get today's date and write it to the github env file
       - name: get current date
         id: date
-        # get today's date and write it to the github env file
         run: echo "DATE=$(date +'%Y-%m-%d')" >> $GITHUB_ENV
 
+      # get the version tags from package.xml then retrieve the value using sed. output this to the github output file
       - name: get previous version
         id: PREV_VERSION
-        # get the version tags from package.xml then retrieve the value using sed. output this to the github output file
         run: echo "PREV_VERSION=$(grep -o "<Version>[^<]*</Version>" ./packages/${{inputs.package}}/meta/package.xml | sed 's/<Version>\(.*\)<\/Version>/\1/')" >> "$GITHUB_OUTPUT"
 
+      # use dpkg to compare the new and the existing version
+      # if the new version is higher than the existing version then run the steps
+      #   create branch 
+      #   commit changes
+      #   push changes
+      #   create pull request
       - name: compare versions
         id: check-version
         run: |
@@ -66,32 +72,47 @@ jobs:
             echo "New version $NEW_VERSION is not higher than previous version $PREV_VERSION"
           fi
 
+      # create a branch on this repo with the name from the user inputs
       - name: create branch
         if: steps.check-version.outputs.SHOULD_CREATE_PR == 'true'
         run: git checkout -b ${{ inputs.branch }}
 
+      # update the value of the version tags
       - name: update version
-        # update the value of the version tags
         run: sed -i -E 's|(<Version>).*?(</Version>)|\1'"${{inputs.version}}"'\2|g' ./packages/${{inputs.package}}/meta/package.xml
 
+      # update the value of the release date tags
       - name: update date
-        # update hte value of the release date tags
         run: sed -i -E 's|(<ReleaseDate>).*?(</ReleaseDate>)|\1'"${{env.DATE}}"'\2|g' ./packages/${{inputs.package}}/meta/package.xml
 
+      # i'm using secrets for the git config (maybe replace this with some generic scm account)
       - name: configure git
         run: |
           git config --local user.email "${{ secrets.ACTION_EMAIL }}"
           git config --local user.name "${{ secrets.ACTION_NAME }}"
 
+      # commit changes with a generic commit message
       - name: commit changes
         if: steps.check-version.outputs.SHOULD_CREATE_PR == 'true'
         run: |
           git add ./packages/${{ inputs.package }}/meta/package.xml
           git commit -m "Update ${{ inputs.package }} to ${{ inputs.version }}"
 
+      # push changes to the new branch
       - name: push changes
         if: steps.check-version.outputs.SHOULD_CREATE_PR == 'true'
         run: git push -u origin HEAD
 
+      - name: dump context
+        env:
+          GITHUB_CONTEXT: ${{ toJson(github) }}
+        run: echo "$GITHUB_CONTEXT"
       # - name: create pull request
       #   if: steps.check-version.outputs.SHOULD_CREATE_PR == 'true'
+      #   uses: actions/github-script@v7
+      #   with:
+      #     script: |
+      #       github.rest.pulls.create({
+      #         owner: context.author,
+      #         repo: context.repo
+      #       })
