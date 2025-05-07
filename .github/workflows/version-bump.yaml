@@ -120,10 +120,14 @@ jobs:
                 base: context.payload.repository.default_branch,
               })
     
+      # needed for the next step
       - name: install node deps
         if: steps.check-version.outputs.SHOULD_CREATE_PR == 'true'
         run: npm install semver@7.7.1
 
+      # get a list of all the open pull reuqests on the repository (async so use await)
+      # iterate over the list of open pull requests and use the regex to extract the version
+      # if the version on the old pr is less than the new version then close the outdated pr
       - name: remove outdated pull requests
         if: steps.check-version.outputs.SHOULD_CREATE_PR == 'true'
         uses: actions/github-script@v7
