@@ -5,8 +5,8 @@
         The CodeFusion Studio extension for Visual Studio Code provides
         build and debug support for Analog Devices microcontrollers.
     </Description>
-    <Version>1.1.0-67</Version>
-    <ReleaseDate>2025-04-30</ReleaseDate>
+    <Version>1.1.3</Version>
+    <ReleaseDate>2025-05-07</ReleaseDate>
     <Default>true</Default>
     <Dependencies>com.analog.codefusion.base,com.analog.codefusion.cfsutil,com.analog.codefusion.plugins,com.analog.codefusion.catalog,com.analog.codefusion.python,com.analog.codefusion.make,com.analog.codefusion.openocd</Dependencies>
     <Operations>
