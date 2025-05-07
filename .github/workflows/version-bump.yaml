@@ -120,12 +120,17 @@ jobs:
                 base: context.payload.repository.default_branch,
               })
     
+      - name: install node deps
+        if: steps.check-version.outputs.SHOULD_CREATE_PR == 'true'
+        run: npm install semver@7.7.1
+
       - name: remove outdated pull requests
         if: steps.check-version.outputs.SHOULD_CREATE_PR == 'true'
         uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
+            const semverGt = require('semver/functions/gt')
             const currentVersion = "${{ inputs.version }}";
             const owner = context.repo.owner;
             const repo = context.repo.repo;
@@ -142,7 +147,7 @@ jobs:
                 const match = pullRequest.title.match(regex);
                 if (match) {
                   const prVersion = match[1];
-                  const versionComparison = await exec.exec('dpkg', ['--compare-versions', currentVersion, 'gt', prVersion]);
+                  const versionComparison = semverGt(currentVersion, prVersion);
                   if (versionComparison === 0) {
                     console.log(`Declining pull request: ${pullRequest.html_url} with version ${prVersion}, which is older than ${currentVersion}`);
                     await github.rest.pulls.update({
@@ -159,6 +164,6 @@ jobs:
               }
             } catch (error) {
               console.error("Error processing pull requests:", error);
-              throw error; // Re-throw to fail the step.
+              throw error;
             }
 
