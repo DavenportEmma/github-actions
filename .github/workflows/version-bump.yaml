@@ -129,7 +129,7 @@ jobs:
             const currentVersion = "${{ inputs.version }}";
             const owner = context.repo.owner;
             const repo = context.repo.repo;
-            const regex = /Bump .* to version (.*)/;
+            const regex = /\[BumpBot\] .* to version (.*)/;
 
             try {
               const openPullRequests = await github.rest.pulls.list({
