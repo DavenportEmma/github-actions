@@ -5,8 +5,8 @@
         Provides part support and examples for MAX32xxx and MAX78xxx
         microcontroller families.
     </Description>
-    <Version>1.1.0-632-f6c39afd</Version>
-    <ReleaseDate>2025-04-26</ReleaseDate>
+    <Version>1.1.1</Version>
+    <ReleaseDate>2025-05-07</ReleaseDate>
     <Default>true</Default>
     <Dependencies>com.analog.codefusion.base,com.analog.codefusion.git</Dependencies>
     <Operations>
