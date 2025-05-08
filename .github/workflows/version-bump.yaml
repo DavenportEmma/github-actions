@@ -159,9 +159,6 @@ jobs:
       - name: Update version and date in XML
         if: steps.check-version.outputs.SHOULD_CREATE_PR == 'true'
         run: |
-          # Create backup
-          cp ./packages/${{inputs.package}}/meta/package.xml ./packages/${{inputs.package}}/meta/package.xml.bak
-          
           # Update version - targeting only the first Version tag to be safer
           xmlstarlet ed -L -u "//Version[1]" -v "${{inputs.version}}" ./packages/${{inputs.package}}/meta/package.xml
 
@@ -219,7 +216,6 @@ jobs:
             const repo = context.repo.repo;
             const regex = /\[BumpBot\] (.*) to version (.*)/;
 
- 
             function lessThan(a,b) {
                 if(valid(a) && valid(b)) {
                     return lt(a,b);
