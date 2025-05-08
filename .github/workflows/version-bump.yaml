@@ -28,17 +28,14 @@ on:
         required: true
         type: string
         default: "1.1.1"
-      branch:
-        description: "Branch to bump the component on"
-        required: true
-        type: string
-        default: "test"
+
 jobs:
   bump-version:
     runs-on: ubuntu-latest
     outputs:
-      PREV_VERSION: ${{ steps.PREV_VERSION.outputs.PREV_VERSION }}
+      PREV_VERSION: ${{ steps.prev-version.outputs.PREV_VERSION }}
       SHOULD_CREATE_PR: ${{ steps.check-version.outputs.SHOULD_CREATE_PR }}
+      BRANCH_NAME: ${{ steps.branch-name.outputs.BRANCH_NAME }}
     steps:
       - name: checkout
         uses: actions/checkout@v4
@@ -53,7 +50,7 @@ jobs:
 
       # get the version tags from package.xml then retrieve the value using sed. output this to the github output file
       - name: get previous version
-        id: PREV_VERSION
+        id: prev-version
         run: echo "PREV_VERSION=$(grep -o "<Version>[^<]*</Version>" ./packages/${{inputs.package}}/meta/package.xml | sed 's/<Version>\(.*\)<\/Version>/\1/')" >> "$GITHUB_OUTPUT"
 
       # use dpkg to compare the new and the existing version
@@ -70,7 +67,7 @@ jobs:
           script: |
             const { neq, valid } = require('semver');
             const current_version = "${{ inputs.version }}";
-            const previous_version ="${{ steps.PREV_VERSION.outputs.PREV_VERSION }}"
+            const previous_version ="${{ steps.prev-version.outputs.PREV_VERSION }}"
 
             function notEqual(v1, v2) {
               if(valid(v1) && valid(v2)) {
@@ -88,11 +85,18 @@ jobs:
               core.setOutput('SHOULD_CREATE_PR', 'false');
             }
 
+      - name: get branch name
+        id: branch-name
+        if: steps.check-version.outputs.SHOULD_CREATE_PR == 'true'
+        run: |
+          COMPONENT_NAME=$(grep -o '[^.]*$' <<< ${{ inputs.package }})
+          echo "BRANCH_NAME=bump-$COMPONENT_NAME-${{ steps.prev-version.outputs.PREV_VERSION }}-to-${{ inputs.version }}" >> "$GITHUB_OUTPUT"
+
       # create a branch on this repo with the name from the user inputs
       - name: create branch
         if: steps.check-version.outputs.SHOULD_CREATE_PR == 'true'
         run: |
-          git checkout -b ${{ inputs.branch }}
+          git checkout -b ${{ steps.branch-name.outputs.BRANCH_NAME }}
           git config --local user.email "actions@github.com"
           git config --local user.name "GitHub Actions"
 
@@ -116,7 +120,7 @@ jobs:
       # push changes to the new branch
       - name: push changes
         if: steps.check-version.outputs.SHOULD_CREATE_PR == 'true'
-        run: git push origin ${{ inputs.branch }}
+        run: git push origin ${{ steps.branch-name.outputs.BRANCH_NAME }}
 
       - name: create pull request
         if: steps.check-version.outputs.SHOULD_CREATE_PR == 'true'
@@ -130,7 +134,7 @@ jobs:
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 title: "[BumpBot] ${{ inputs.package }} to version ${{ inputs.version }}",
-                head: "${{ inputs.branch }}",
+                head: "${{ steps.branch-name.outputs.BRANCH_NAME }}",
                 base: context.payload.repository.default_branch,
               })
 
