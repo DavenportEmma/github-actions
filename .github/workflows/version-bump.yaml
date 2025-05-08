@@ -36,6 +36,7 @@ jobs:
       PREV_VERSION: ${{ steps.prev-version.outputs.PREV_VERSION }}
       SHOULD_CREATE_PR: ${{ steps.check-version.outputs.SHOULD_CREATE_PR }}
       BRANCH_NAME: ${{ steps.branch-name.outputs.BRANCH_NAME }}
+      PR_URL: ${{ steps.create-pr.outputs.PR_URL }}
     steps:
       - name: checkout
         uses: actions/checkout@v4
@@ -92,6 +93,21 @@ jobs:
           COMPONENT_NAME=$(grep -o '[^.]*$' <<< ${{ inputs.package }})
           echo "BRANCH_NAME=bump-$COMPONENT_NAME-${{ steps.prev-version.outputs.PREV_VERSION }}-to-${{ inputs.version }}" >> "$GITHUB_OUTPUT"
 
+      - name: check for existing updates
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const branches = await github.rest.repos.listBranches({
+              owner: context.repo.owner,
+              repo: context.repo.repo
+            })
+
+            for(const branch of branches.data) {
+              if(branch.name == "${{ steps.branch-name.outputs.BRANCH_NAME }}") {
+                throw new Error(`Branch ${branch.name} already exists ${branch.commit.url}`) 
+              }
+            }
+
       # create a branch on this repo with the name from the user inputs
       - name: create branch
         if: steps.check-version.outputs.SHOULD_CREATE_PR == 'true'
@@ -123,6 +139,7 @@ jobs:
         run: git push origin ${{ steps.branch-name.outputs.BRANCH_NAME }}
 
       - name: create pull request
+        id: create-pr
         if: steps.check-version.outputs.SHOULD_CREATE_PR == 'true'
         uses: actions/github-script@v7
         with:
@@ -138,7 +155,8 @@ jobs:
                 base: context.payload.repository.default_branch,
               })
 
-              console.log(`Created new pull request: ${pr.data.url}`)
+              console.log(`Created new pull request: ${pr.data.url}`);
+              core.setOutput('PR_URL', `${pr.data.url}`);
 
       # get a list of all the open pull reuqests on the repository (async so use await)
       # iterate over the list of open pull requests and use the regex to extract the version
@@ -159,9 +177,16 @@ jobs:
             function lessThan(v1, v2) {
               if(valid(v1) && valid(v2)) {
                 return lt(v1,v2)
-              } else {
-                return v1 < v2
               }
+              
+              const num1 = parseFloat(v1);
+              const num2 = parseFloat(v2);
+
+              if(!isNaN(num1) && !isNaN(num2)) {
+                return num1 < num2;
+              }
+
+              return String(v1) < String(v2);
             }
 
             try {
@@ -178,6 +203,13 @@ jobs:
                   const previousVersion = match[2];
 
                   if (lessThan(previousVersion, currentVersion) && package == currentPackage) {
+                    await github.rest.issues.createComment({
+                      owner: owner,
+                      repo: repo,
+                      issue_number: pullRequest.number,
+                      body: `Closing this PR in favour of a new version bump: ${{ steps.create-pr.outputs.PR_URL }}.`
+                    })
+
                     await github.rest.pulls.update({
                       owner: owner,
                       repo: repo,
