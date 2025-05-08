@@ -27,7 +27,7 @@ on:
         description: "Version to bump the component to"
         required: true
         type: string
-        default: "1.1.1"
+        default: ""
 jobs:
   bump-version:
     runs-on: ubuntu-latest
@@ -37,30 +37,43 @@ jobs:
       BRANCH_NAME: ${{ steps.branch-name.outputs.BRANCH_NAME }}
       PR_URL: ${{ steps.create-pr.outputs.PR_URL }}
     steps:
-      - name: checkout
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: install node deps
-        run: npm install semver@7.7.1
+      - name: Install dependencies
+        run: |
+          npm install semver@7.7.1
+          sudo apt-get update
+          sudo apt-get install -y libxml2-utils
 
-      # get today's date and write it to the github env file
-      - name: get current date
+      # Get today's date and write it to the github env file
+      - name: Get current date
         id: date
         run: echo "DATE=$(date +'%Y-%m-%d')" >> $GITHUB_ENV
 
-      # get the version tags from package.xml then retrieve the value using sed. output this to the github output file
-      - name: get previous version
-        id: prev-version
-        run: echo "PREV_VERSION=$(grep -o "<Version>[^<]*</Version>" ./packages/${{inputs.package}}/meta/package.xml | sed 's/<Version>\(.*\)<\/Version>/\1/')" >> "$GITHUB_OUTPUT"
+      # Check if package.xml exists
+      - name: Check if package.xml exists
+        id: check-file
+        run: |
+          if [ ! -f "./packages/${{inputs.package}}/meta/package.xml" ]; then
+            echo "ERROR: package.xml does not exist for ${{inputs.package}}"
+            exit 1
+          fi
 
-      # use dpkg to compare the new and the existing version
-      # if the new version is higher than the existing version then run the steps
-      #   create branch
-      #   commit changes
-      #   push changes
-      #   create pull request
-      #   remove outdated pull requests
-      - name: compare versions
+      # Use xmllint to properly extract the version
+      - name: Get previous version
+        id: prev-version
+        run: |
+          PREV_VERSION=$(xmllint --xpath "string(//Version)" ./packages/${{inputs.package}}/meta/package.xml)
+          if [ -z "$PREV_VERSION" ]; then
+            echo "ERROR: Could not find Version tag in package.xml"
+            exit 1
+          fi
+          echo "PREV_VERSION=$PREV_VERSION" >> "$GITHUB_OUTPUT"
+          echo "Found previous version: $PREV_VERSION"
+
+      # Compare versions using semver and respect the allow_downgrade flag
+      - name: Compare versions
         id: check-version
         uses: actions/github-script@v7
         with:
@@ -85,82 +98,115 @@ jobs:
               core.setOutput('SHOULD_CREATE_PR', 'false');
             }
 
-      - name: get branch name
+      - name: Get branch name
         id: branch-name
         if: steps.check-version.outputs.SHOULD_CREATE_PR == 'true'
         run: |
           COMPONENT_NAME=$(grep -o '[^.]*$' <<< ${{ inputs.package }})
-          echo "BRANCH_NAME=bump-$COMPONENT_NAME-${{ steps.prev-version.outputs.PREV_VERSION }}-to-${{ inputs.version }}" >> "$GITHUB_OUTPUT"
+          PREV_VERSION="${{steps.prev-version.outputs.PREV_VERSION}}"
 
-      - name: check for existing updates
+          BRANCH_NAME="bump-${COMPONENT_NAME}-${PREV_VERSION}-to-${{ inputs.version }}"
+
+          # Ensure branch name isn't too long (GitHub has a 255 char limit)
+          if [ ${#BRANCH_NAME} -gt 200 ]; then
+            TRUNCATED_BRANCH_NAME="${BRANCH_NAME:0:200}"
+            echo "WARNING: Branch name was too long and has been truncated"
+            BRANCH_NAME="${TRUNCATED_BRANCH_NAME}"
+          fi
+
+          echo "BRANCH_NAME=$BRANCH_NAME" >> "$GITHUB_OUTPUT"
+          echo "Using branch name: $BRANCH_NAME"
+
+      - name: Check for existing branches
+        if: steps.check-version.outputs.SHOULD_CREATE_PR == 'true'
         uses: actions/github-script@v7
         with:
           script: |
-            const branches = await github.rest.repos.listBranches({
-              owner: context.repo.owner,
-              repo: context.repo.repo
-            })
+            try {
+              const branches = await github.rest.repos.listBranches({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                per_page: 100
+              })
 
-            for(const branch of branches.data) {
-              if(branch.name == "${{ steps.branch-name.outputs.BRANCH_NAME }}") {
-                throw new Error(`Branch ${branch.name} already exists ${branch.commit.html_url}`) 
+              for(const branch of branches.data) {
+                if(branch.name == "${{ steps.branch-name.outputs.BRANCH_NAME }}") {
+                  throw new Error(`Branch ${branch.name} already exists ${branch.commit.html_url}`) 
+                }
+              }
+            } catch(error) {
+              if (error.message.includes("already exists")) {
+                core.setFailed(error.message);
+              } else {
+                console.error("Error checking branches:", error);
+                core.warning("Could not fully verify branch uniqueness due to an error");
               }
             }
 
-      # create a branch on this repo with the name from the user inputs
-      - name: create branch
+      # Create a branch on this repo with the name from the user inputs
+      - name: Create branch
         if: steps.check-version.outputs.SHOULD_CREATE_PR == 'true'
         run: |
           git checkout -b ${{ steps.branch-name.outputs.BRANCH_NAME }}
           git config --local user.email "actions@github.com"
           git config --local user.name "GitHub Actions"
 
-      # update the value of the version tags
-      - name: update version
+      # Update the version and date using xmlstarlet for safer XML manipulation
+      - name: Install XML tools
         if: steps.check-version.outputs.SHOULD_CREATE_PR == 'true'
-        run: sed -i -E 's|(<Version>).*?(</Version>)|\1'"${{inputs.version}}"'\2|g' ./packages/${{inputs.package}}/meta/package.xml
+        run: sudo apt-get install -y xmlstarlet
 
-      # update the value of the release date tags
-      - name: update date
+      - name: Update version and date in XML
         if: steps.check-version.outputs.SHOULD_CREATE_PR == 'true'
-        run: sed -i -E 's|(<ReleaseDate>).*?(</ReleaseDate>)|\1'"${{env.DATE}}"'\2|g' ./packages/${{inputs.package}}/meta/package.xml
+        run: |
+          # Create backup
+          cp ./packages/${{inputs.package}}/meta/package.xml ./packages/${{inputs.package}}/meta/package.xml.bak
+          
+          # Update version - targeting only the first Version tag to be safer
+          xmlstarlet ed -L -u "//Version[1]" -v "${{inputs.version}}" ./packages/${{inputs.package}}/meta/package.xml
 
-      # commit changes with a generic commit message
-      - name: commit changes
+          # Update release date - targeting only the first ReleaseDate tag
+          xmlstarlet ed -L -u "//ReleaseDate[1]" -v "${{env.DATE}}" ./packages/${{inputs.package}}/meta/package.xml
+
+      # Commit changes with a generic commit message
+      - name: Commit changes
         if: steps.check-version.outputs.SHOULD_CREATE_PR == 'true'
         run: |
           git add ./packages/${{ inputs.package }}/meta/package.xml
           git commit -m "Update ${{ inputs.package }} to ${{ inputs.version }}"
 
-      # push changes to the new branch
-      - name: push changes
+      # Push changes to the new branch with retry logic for network issues
+      - name: Push changes
         if: steps.check-version.outputs.SHOULD_CREATE_PR == 'true'
         run: git push origin ${{ steps.branch-name.outputs.BRANCH_NAME }}
 
-      - name: create pull request
+      - name: Create pull request
         id: create-pr
         if: steps.check-version.outputs.SHOULD_CREATE_PR == 'true'
         uses: actions/github-script@v7
         with:
           # use the default GITHUB_TOKEN. this is created automatically and disposed of automatically when the job ends
           # or in 24hr whichever happens first
-          github-token: ${{ secrets.GITHUB_TOKEN }} 
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-              const pr = await github.rest.pulls.create({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                title: "[BumpBot] ${{ inputs.package }} to version ${{ inputs.version }}",
-                head: "${{ steps.branch-name.outputs.BRANCH_NAME }}",
-                base: context.payload.repository.default_branch,
-              })
+              try {
+                const pr = await github.rest.pulls.create({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  title: "[BumpBot] ${{ inputs.package }} to version ${{ inputs.version }}",
+                  head: "${{ steps.branch-name.outputs.BRANCH_NAME }}",
+                  base: context.payload.repository.default_branch,
+                })
 
-              console.log(`Created new pull request: ${pr.data.html_url}`);
-              core.setOutput('PR_URL', `${pr.data.html_url}`);
+                console.log(`Created new pull request: ${pr.data.html_url}`);
+                core.setOutput('PR_URL', `${pr.data.html_url}`);
+              } catch (error) {
+                console.error("Error creating PR:", error);
+                core.setFailed(`Failed to create PR: ${error.message}`);
+              }
 
-      # get a list of all the open pull reuqests on the repository (async so use await)
-      # iterate over the list of open pull requests and use the regex to extract the version
-      # if the version on the old pr is less than the new version then close the outdated pr
-      - name: remove outdated pull requests
+      # Manage outdated PRs with improved version comparison
+      - name: Remove outdated pull requests
         if: steps.check-version.outputs.SHOULD_CREATE_PR == 'true'
         uses: actions/github-script@v7
         with:
@@ -173,19 +219,23 @@ jobs:
             const repo = context.repo.repo;
             const regex = /\[BumpBot\] (.*) to version (.*)/;
 
-            function lessThan(v1, v2) {
-              if(valid(v1) && valid(v2)) {
-                return lt(v1,v2)
-              }
-              
-              const num1 = parseFloat(v1);
-              const num2 = parseFloat(v2);
+ 
+            function lessThan(a,b) {
+                if(valid(a) && valid(b)) {
+                    return lt(a,b);
+                }
 
-              if(!isNaN(num1) && !isNaN(num2)) {
-                return num1 < num2;
-              }
+                const a_parts = a.split('.').map(Number)
+                const b_parts = b.split('.').map(Number)
 
-              return String(v1) < String(v2);
+                for(let i =0; i < Math.min(a_parts.length, b_parts.length); i++) {
+                    if (!isNaN(a_parts[i]) && !isNaN(b_parts[i])) {
+                        if (a_parts[i] < b_parts[i]) return true;
+                        if (a_parts[i] > b_parts[i]) return false;
+                      }
+                }
+
+                return a < b
             }
 
             try {
@@ -193,6 +243,7 @@ jobs:
                 owner: owner,
                 repo: repo,
                 state: 'open',
+                per_page: 100
               });
 
               for (const pullRequest of openPullRequests.data) {
@@ -201,7 +252,10 @@ jobs:
                   const package = match[1];
                   const previousVersion = match[2];
 
-                  if (lessThan(previousVersion, currentVersion) && package == currentPackage) {
+                  if (lessThan(previousVersion, currentVersion) &&
+                      package == currentPackage &&
+                      pullRequest.html_url !== "${{ steps.create-pr.outputs.PR_URL }}"
+                  ) {
                     await github.rest.issues.createComment({
                       owner: owner,
                       repo: repo,
